@@ -1,0 +1,72 @@
+#File: TemperatureRegulation.fll
+Engine: TemperatureRegulation
+InputVariable: temperature
+  enabled: true
+  range: 0.000 40.000
+  lock-range: false
+  term: MB Ramp 0.000 10.000 15.000
+  term: B Triangle 10.000 15.000 20.000
+  term: N Triangle 18.000 20.000 22.000
+  term: A Triangle 20.000 25.000 30.000
+  term: MA Ramp 25.000 30.000 40.000
+InputVariable: moisture
+  enabled: true
+  range: 0.000 100.000
+  lock-range: false
+  term: MB Ramp 0.000 10.000 20.000
+  term: B Triangle 10.000 25.000 40.000
+  term: N Triangle 30.000 40.000 50.000
+  term: A Triangle 40.000 55.000 70.000
+  term: MA Ramp 60.000 70.000 100.000
+OutputVariable: tempChange
+  enabled: true
+  range: -15.000 15.000
+  lock-range: false
+  aggregation: Maximum
+  defuzzifier: Centroid 100
+  default: nan
+  lock-previous: false
+  term: DG Triangle -15.000 -10.5 -7.5
+  term: DN Triangle -10.000 -5.000 -2.5
+  term: DP Triangle -7.5 -2.0 0.0
+  term: M Triangle -1.0 0.0 1.0
+  term: IP Triangle 0.0 2.0 7.5
+  term: IN Triangle 2.5 5.0 10.0
+  term: IG Triangle 7.5 10.5 15.00   
+RuleBlock: mandami
+  enabled: true
+  conjunction: Minimum
+  disjunction: Maximum
+  implication: Minimum
+  activation: General
+  rule: if temperature is MB and moisture is MB then tempChange is IN
+  rule: if temperature is MB and moisture is B then tempChange is IN
+  rule: if temperature is MB and moisture is N then tempChange is IG
+  rule: if temperature is MB and moisture is A then tempChange is IG
+  rule: if temperature is MB and moisture is MA then tempChange is IG
+
+  rule: if temperature is B and moisture is MB then tempChange is M
+  rule: if temperature is B and moisture is B then tempChange is M
+  rule: if temperature is B and moisture is N then tempChange is IP
+  rule: if temperature is B and moisture is A then tempChange is IP
+  rule: if temperature is B and moisture is MA then tempChange is IN
+
+  rule: if temperature is N and moisture is MB then tempChange is M
+  rule: if temperature is N and moisture is B then tempChange is M
+  rule: if temperature is N and moisture is N then tempChange is M
+  rule: if temperature is N and moisture is A then tempChange is M
+  rule: if temperature is N and moisture is MA then tempChange is DP
+
+  rule: if temperature is A and moisture is MB then tempChange is M
+  rule: if temperature is A and moisture is B then tempChange is M
+  rule: if temperature is A and moisture is N then tempChange is DP
+  rule: if temperature is A and moisture is A then tempChange is DP
+  rule: if temperature is A and moisture is MA then tempChange is DN
+  
+  rule: if temperature is MA and moisture is MB then tempChange is DP
+  rule: if temperature is MA and moisture is B then tempChange is DN
+  rule: if temperature is MA and moisture is N then tempChange is DN
+  rule: if temperature is MA and moisture is A then tempChange is DG
+  rule: if temperature is MA and moisture is MA then tempChange is DG
+  
+  
