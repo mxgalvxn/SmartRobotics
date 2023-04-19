@@ -4,7 +4,7 @@ import os
 from PIL import Image
 
 # Cargando la imagen
-imagen = Image.open('/Users/monse/OneDrive/Documents/c++/6to/control/vision/chango.jpeg')
+imagen = Image.open('chango.jpeg')
 
 # Mostrando la imagen en color
 #imagen.show()
