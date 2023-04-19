@@ -1,15 +1,12 @@
-function [x, y] = generadorMapa() 
+function [x, y] = generadorMapa(x_carrito,y_carrito) 
 close all
 clc
 
-if exist('BinaryMap','var') == 0 
-    BinaryMap = makemap(500);
-end
-
+load('binaryMap.mat')
 % makemap:
 %   left button, click and drag to create a rectangle
 %   or type the following letters in the figure window:
-%   p - draw polygon
+%   p - draw polygonSSSS
 %   c - draw circle
 %   e - erase map
 %   u - undo last action
@@ -31,18 +28,10 @@ sv.ValidationDistance = 0.01;
 % Hacemos que las dimensiones del SS sean las mismas del mapa
 ss.StateBounds = [map.XWorldLimits;map.YWorldLimits; [-pi pi]];
 
-planner = plannerRRT(ss,sv);
-planner.MaxIterations = 200000;
-planner.MaxConnectionDistance = 0.5;
 
-startLocation = [0 0 0];
-endLocation = [5 5 0];
+startLocation = [.5 .5 0];
+endLocation = [4.5 4.5 0];
 
-tic
-[pthObj,solnInfo] = plan(planner,startLocation,endLocation);
-time_rrt = toc;
-text = ['Tiempo de ejecucion de RRT: ',num2str(time_rrt)];
-disp(text);
 
 %% Ahora para RRTStar
 
@@ -55,9 +44,8 @@ planner_star.MaxConnectionDistance = 0.5;
 
 tic
 [pthObj_star,solnInfo_star] = plan(planner_star,startLocation,endLocation);
-time_rrt = toc;
-text = ['Tiempo de ejecucion de RRT*: ',num2str(time_rrt)];
-disp(text);
+% text = ['Tiempo de ejecucion de RRT*: ',num2str(time_rrt)];
+disp('Ruta no encontrada');
 
 figure()
 show(map)
