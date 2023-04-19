@@ -4,7 +4,11 @@ import os
 from PIL import Image
 
 # Cargando la imagen
-imagen = Image.open('chango.jpeg')
+imagen = []
+for i in range(152,162):
+    imagen.append(Image.open("road"+i))
+
+#imagen = Image.open('chango.jpeg')
 
 # Mostrando la imagen en color
 #imagen.show()
