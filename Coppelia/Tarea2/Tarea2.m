@@ -1,17 +1,9 @@
-[x, y] = generadorMapa();
-
-if isempty(x) ||isempty(y)
-    while isempty(x) ||isempty(y)
-        [x, y] = generadorMapa();
-    end
-end
 
 disp("Iniciando carrito");
 % Inicializar la conexión con CoppeliaSim
 sim=remApi('remoteApi');
 sim.simxFinish(-1); % Cerrar todas las conexiones previas
 clientID=sim.simxStart('127.0.0.1',19999,true,true,5000,5);
-
 
 if (clientID>-1)
     disp('Conexión establecida con CoppeliaSim');
@@ -26,40 +18,50 @@ if (clientID>-1)
     [~, cart_position] = sim.simxGetObjectPosition (clientID, pioneer, -1, sim.simx_opmode_streaming);
     [~, cart_orientation] = sim.simxGetObjectOrientation(clientID, pioneer, -1, sim.simx_opmode_streaming);
     [~, target] = sim.simxGetObjectPosition (clientID, target_block, -1, sim.simx_opmode_streaming);
+    
+    x_act = cart_position(1);
+    y_act = cart_position(2);
 
+    [x, y] = generadorMapa(x_act,y_act);
+
+    if isempty(x) ||isempty(y)
+        while isempty(x) ||isempty(y)
+            [x, y] = generadorMapa(x_act,y_act);
+        end
+    end
     % Controlador PID
-    Kp = 1.5; 
+    Kp = 4; 
     Kd = 1; 
  
     error_dis_ant = 0;
     error_ori_ant = 0;
-    
+
+    figure()
+    plot(x,y)
     
     % Definir la posición deseada del carrito
      % x, y coordinates
     num_positions = size(x,1);
- 
     
-    t = 0;
-    t_final = 10;
     
-    i = 1;
-    hold on;
+    i = 2;
     % Comenzar la simulación
-    while i <= num_positions
+    while i <= num_positions 
     
-        x_deseado = pthObj_star.States(i,1);
-        y_deseado = pthObj_star.States(i,2);
+        x_deseado = x(i,1)
+        y_deseado = y(i,1)
             
         [~, cart_position] = sim.simxGetObjectPosition(clientID, pioneer, -1, sim.simx_opmode_buffer);
         x_act = cart_position(1);
         y_act = cart_position(2);
-
-        plot(x_act, y_act,'o');
+        hold on
+        plot(x_act, y_act,'ob')
+        
+        
         [~, cart_orientation] = sim.simxGetObjectOrientation(clientID, pioneer, -1, sim.simx_opmode_buffer);
         theta_act = cart_orientation(3);
         
-        error_dis = sqrt((x_deseado-x_act)^2 + (y_deseado-y_act)^2);
+        error_dis = sqrt((x_deseado-x_act)^2 + (y_deseado-y_act)^2)
         error_ori = atan2(y_deseado-y_act, x_deseado-x_act) - theta_act;
         
         if error_ori > pi
@@ -71,9 +73,9 @@ if (clientID>-1)
         
         error_dis_der= error_dis - error_dis_ant;
         error_ori_der = error_ori - error_ori_ant;
-
-        u_vel = Kp*error_dis + Kd*error_dis_der;
-        u_ori = Kp*error_ori + Kd*error_ori_der;
+        
+        u_vel = Kp*tanh(error_dis) + Kd*tanh(error_dis_der);
+        u_ori = Kp*tanh(error_ori) + Kd*tanh(error_ori_der);
         
         error_dis_ant = error_dis;
         error_ori_ant = error_ori;
@@ -81,11 +83,11 @@ if (clientID>-1)
         sim.simxSetJointTargetVelocity(clientID, left_motor, u_vel-u_ori, sim.simx_opmode_blocking);
         sim.simxSetJointTargetVelocity(clientID, right_motor, u_vel+u_ori, sim.simx_opmode_blocking);
         
-        t = t + 0.01;
         
-        if error_dis < 0.02
-        i = i+1;
-        pause(1); % wait for 1 second before moving to the next reference
+
+        if error_dis < 0.05
+            i = i+1;
+            pause(1); % wait for 1 second before moving to the next reference
         end
 
     end
