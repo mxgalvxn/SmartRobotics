@@ -4,9 +4,7 @@ import os
 from PIL import Image
 
 # Cargando la imagen
-imagen = []
-for i in range(152,162):
-    imagen.append(Image.open("road"+i))
+imagen = Image.open("road152.png")
 
 #imagen = Image.open('chango.jpeg')
 
@@ -28,14 +26,14 @@ imagen_binaria = escala_grises.point(lambda x: 0 if x < umbral else 255, '1')
 #imagen_binaria.show()
 
 # Separar los canales de color
-r, g, b = imagen.split()
+canales = imagen.split()
 
 # Aplicar un umbral de 128 al canal rojo
 umbral = 180
-r = r.point(lambda x: 0 if x < umbral else 255, 'L')
+r = canales[0].point(lambda x: 0 if x < umbral else 255, 'L')
 
 # Recombinar los canales de color para formar la imagen binaria
-imagen_binR = Image.merge('RGB', (r, g, b))
+imagen_binR = Image.merge('RGB', (r, canales[1], canales[2]))
 
 # Mostrar la imagen binaria
 #imagen_binR.show()
