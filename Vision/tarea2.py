@@ -8,7 +8,7 @@ img = cv2.imread("road152.png", 0)
 noise = np.zeros(img.shape, np.int8)
 cv2.randn(noise, 0, 20)
 
-noisy_img = cv2.add(img, noise)
+noisy_img = cv2.addWeighted(img, 1, noise, 1, 0)
 
 # Aplicar umbralización
 ret, thresh = cv2.threshold(noisy_img, 0, 255, cv2.THRESH_BINARY_INV+cv2.THRESH_OTSU)
