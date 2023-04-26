@@ -1,17 +1,17 @@
 import cv2
 import numpy as np
 
-# Cargar la imagen
-img = cv2.imread("road152.png", 0)
+# Cargar la imagen en escala de grises
+img = cv2.imread("road1.png", 0)
 
 # Agregar ruido gaussiano
-noise = np.zeros(img.shape, np.int8)
+noise = np.zeros(img.shape, np.float32)
 cv2.randn(noise, 0, 20)
 
-noisy_img = cv2.addWeighted(img, 1, noise, 1, 0)
+noisy_img = cv2.addWeighted(img, 1, noise, 1, 0, dtype=cv2.CV_8U)
 
 # Aplicar umbralización
-ret, thresh = cv2.threshold(noisy_img, 0, 255, cv2.THRESH_BINARY_INV+cv2.THRESH_OTSU)
+_, thresh = cv2.threshold(noisy_img, 127, 255, cv2.THRESH_BINARY_INV)
 
 # Eliminar ruido
 kernel = np.ones((3, 3), np.uint8)
@@ -29,13 +29,16 @@ ret, markers = cv2.connectedComponents(sure_fg)
 # Aplicar Watershed
 markers = markers + 1
 markers[unknown==255] = 0
-markers = cv2.watershed(cv2.cvtColor(np.uint8(noisy_img), cv2.COLOR_GRAY2BGR), markers)
+markers = cv2.watershed(cv2.cvtColor(noisy_img, cv2.COLOR_GRAY2BGR), markers)
 
 # Dibujar contornos en la imagen original
-img[markers == -1] = [255, 0, 0]
+img[markers == -1] = 255
 
 # Mostrar resultados
 cv2.imshow("Original Image", img)
 cv2.imshow("Noisy Image", noisy_img)
+cv2.imshow('Threshold', thresh)
+cv2.imshow('Opening', opening)
+#cv2.imshow('Markers', markers)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
