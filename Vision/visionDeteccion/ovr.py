@@ -1,52 +1,55 @@
 import cv2
 import numpy as np
-from sklearn.svm import SVC
-from sklearn.multiclass import OneVsRestClassifier
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
+from sklearn.svm import SVC
 
-# Leer las imágenes de entrenamiento y las etiquetas
-imagenes = ['1.jpg', '2.jpg']
-etiquetas = ['claseA', 'claseB']
+# Lista de nombres de archivos de imágenes en formato PNG
+imagenes = ['c:/Users/Admin/Desktop/Semestre 6/visionDeteccion/road2.png', 'c:/Users/Admin/Desktop/Semestre 6/visionDeteccion/road3.png', 'c:/Users/Admin/Desktop/Semestre 6/visionDeteccion/road9.png', 'c:/Users/Admin/Desktop/Semestre 6/visionDeteccion/road152.png', 'c:/Users/Admin/Desktop/Semestre 6/visionDeteccion/road153.png']
 
-# Crear una lista para almacenar las características y las etiquetas
-caracteristicas = []
-etiquetas_bin = []
+# Crear el detector y el descriptor BRIEF
+detector = cv2.ORB_create()
+descriptor = cv2.xfeatures2d.BriefDescriptorExtractor_create()
 
-# Extraer las características de las imágenes
-for imagen in imagenes:
-    # Leer la imagen utilizando OpenCV
-    img = cv2.imread(imagen)
+# Listas para almacenar los descriptores y etiquetas de todas las imágenes
+descriptores_totales = []
+etiquetas = []
+
+# Procesar cada imagen por separado
+for etiqueta, imagen_nombre in enumerate(imagenes):
+    # Leer la imagen en escala de grises
+    imagen = cv2.imread(imagen_nombre, 0)
     
-    # Extraer las características de la imagen (por ejemplo, usando el histograma de color)
-    caracteristica = extract_features(img)
+    # Encontrar los puntos clave y los descriptores
+    puntos_clave = detector.detect(imagen, None)
+    puntos_clave, descriptores = descriptor.compute(imagen, puntos_clave)
     
-    # Agregar la característica a la lista de características
-    caracteristicas.append(caracteristica)
+    # Agregar los descriptores a la lista total
+    descriptores_totales.extend(descriptores)
+    
+    # Agregar etiquetas correspondientes a las imágenes
+    etiquetas.extend([etiqueta] * len(descriptores))
 
-# Binarizar las etiquetas
-for etiqueta in etiquetas:
-    if etiqueta == 'claseA':
-        etiquetas_bin.append(1)
-    else:
-        etiquetas_bin.append(0)
+    # Dibujar los puntos clave en la imagen
+    imagen_con_puntos = cv2.drawKeypoints(imagen, puntos_clave, None, color=(0, 255, 0), flags=0)
+    
+    # Mostrar la imagen con los puntos clave
+    cv2.imshow(imagen_nombre, imagen_con_puntos)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
 # Convertir las listas en matrices numpy
-caracteristicas = np.array(caracteristicas)
-etiquetas_bin = np.array(etiquetas_bin)
+descriptores_totales = np.array(descriptores_totales)
+etiquetas = np.array(etiquetas)
 
-# Dividir los datos en conjuntos de entrenamiento y prueba
-X_train, X_test, y_train, y_test = train_test_split(caracteristicas, etiquetas_bin, test_size=0.2, random_state=42)
+# Dividir el conjunto de datos en entrenamiento y prueba
+X_train, X_test, y_train, y_test = train_test_split(descriptores_totales, etiquetas, test_size=0.2, random_state=42)
 
-# Crear el clasificador OvR utilizando SVM como clasificador base
-classifier = OneVsRestClassifier(SVC())
+# Crear un clasificador SVM para OvR
+clasificador = SVC(kernel='linear', decision_function_shape='ovr')
 
 # Entrenar el clasificador
-classifier.fit(X_train, y_train)
+clasificador.fit(X_train, y_train)
 
-# Predecir las etiquetas de prueba
-y_pred = classifier.predict(X_test)
-
-# Calcular la precisión
-accuracy = accuracy_score(y_test, y_pred)
-print("Precisión:", accuracy)
+# Evaluar el clasificador en el conjunto de prueba
+accuracy = clasificador.score(X_test, y_test)
+print("Exactitud del clasificador:", accuracy)
