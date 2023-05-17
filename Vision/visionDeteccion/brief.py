@@ -1,37 +1,49 @@
 import cv2
 import numpy as np
+from sklearn.svm import SVC
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
 
-def brief_descriptor(image, keypoints, patch_size=48, descriptor_size=256):
-    # Definir los pares de puntos para BRIEF
-    # Aquí se utilizan las coordenadas del punto como semilla para generar números aleatorios
-    np.random.seed(0)
-    pairs = np.random.randint(-patch_size // 2, patch_size // 2, size=(descriptor_size, 2))
+# Lista de nombres de archivos de imágenes en formato PNG
+imagenes = ['c:/Users/Admin/Desktop/Semestre 6/visionDeteccion/road2.png','c:/Users/Admin/Desktop/Semestre 6/visionDeteccion/road3.png','c:/Users/Admin/Desktop/Semestre 6/visionDeteccion/road9.png','c:/Users/Admin/Desktop/Semestre 6/visionDeteccion/road152.png','c:/Users/Admin/Desktop/Semestre 6/visionDeteccion/road153.png']
+
+# Crear el detector y el descriptor BRIEF
+detector = cv2.ORB_create()
+descriptor = cv2.xfeatures2d.BriefDescriptorExtractor_create()
+
+# Listas para almacenar los descriptores y etiquetas de todas las imágenes
+descriptores_totales = []
+etiquetas = []
+
+# Procesar cada imagen por separado
+for imagen_nombre in imagenes:
+    # Leer la imagen en escala de grises
+    imagen = cv2.imread(imagen_nombre, 0)
     
-    # Convertir la imagen a escala de grises
-    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    # Encontrar los puntos clave y los descriptores
+    puntos_clave = detector.detect(imagen, None)
+    puntos_clave, descriptores = descriptor.compute(imagen, puntos_clave)
     
-    # Calcular los descriptores BRIEF
-    descriptors = np.zeros((len(keypoints), descriptor_size), dtype=np.uint8)
-    for i, keypoint in enumerate(keypoints):
-        x, y = map(int, keypoint.pt)
-        patch = gray_image[y - patch_size // 2:y + patch_size // 2, x - patch_size // 2:x + patch_size // 2]
-        values = patch[pairs[:, 0] + patch_size // 2, pairs[:, 1] + patch_size // 2]
-        descriptors[i] = (values > patch.mean()).astype(np.uint8)
+    # Agregar los descriptores a la lista total
+    descriptores_totales.extend(descriptores)
     
-    return descriptors
+    # Agregar etiquetas correspondientes a las imágenes
+    etiquetas.extend([imagen_nombre] * len(descriptores))
 
-# Cargar una imagen
-image = cv2.imread('c:/Users/Admin/Desktop/Semestre 6/visionDeteccion/1.jpg')
+# Convertir las listas en matrices numpy
+descriptores_totales = np.array(descriptores_totales)
+etiquetas = np.array(etiquetas)
 
-# Detectar puntos clave utilizando el detector de esquinas FAST
-fast = cv2.FastFeatureDetector_create()
-keypoints = fast.detect(image, None)
+# Dividir los datos en conjuntos de entrenamiento y prueba
+X_train, X_test, y_train, y_test = train_test_split(descriptores_totales, etiquetas, test_size=0.2, random_state=42)
 
-# Calcular los descriptores BRIEF para los puntos clave detectados
-descriptors = brief_descriptor(image, keypoints)
+# Crear y entrenar el clasificador SVM
+classifier = SVC()
+classifier.fit(X_train, y_train)
 
-# Dibujar los puntos clave en la imagen y mostrar la imagen resultante
-image_with_keypoints = cv2.drawKeypoints(image, keypoints, None, color=(0, 255, 0))
-cv2.imshow('Image with keypoints', image_with_keypoints)
-cv2.waitKey(0)
+# Predecir las etiquetas de prueba
+y_pred = classifier.predict(X_test)
 
+# Calcular la precisión
+accuracy = accuracy_score(y_test, y_pred)
+print("Precisión:", accuracy)
