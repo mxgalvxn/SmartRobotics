@@ -1,8 +1,5 @@
 import cv2
 import numpy as np
-from sklearn.svm import SVC
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
 
 # Lista de nombres de archivos de imágenes en formato PNG
 imagenes = ['c:/Users/Admin/Desktop/Semestre 6/visionDeteccion/road2.png','c:/Users/Admin/Desktop/Semestre 6/visionDeteccion/road3.png','c:/Users/Admin/Desktop/Semestre 6/visionDeteccion/road9.png','c:/Users/Admin/Desktop/Semestre 6/visionDeteccion/road152.png','c:/Users/Admin/Desktop/Semestre 6/visionDeteccion/road153.png']
@@ -30,20 +27,14 @@ for imagen_nombre in imagenes:
     # Agregar etiquetas correspondientes a las imágenes
     etiquetas.extend([imagen_nombre] * len(descriptores))
 
+    # Dibujar los puntos clave en la imagen
+    imagen_con_puntos = cv2.drawKeypoints(imagen, puntos_clave, None, color=(0, 255, 0), flags=0)
+    
+    # Mostrar la imagen con los puntos clave
+    cv2.imshow(imagen_nombre, imagen_con_puntos)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
 # Convertir las listas en matrices numpy
 descriptores_totales = np.array(descriptores_totales)
 etiquetas = np.array(etiquetas)
-
-# Dividir los datos en conjuntos de entrenamiento y prueba
-X_train, X_test, y_train, y_test = train_test_split(descriptores_totales, etiquetas, test_size=0.2, random_state=42)
-
-# Crear y entrenar el clasificador SVM
-classifier = SVC()
-classifier.fit(X_train, y_train)
-
-# Predecir las etiquetas de prueba
-y_pred = classifier.predict(X_test)
-
-# Calcular la precisión
-accuracy = accuracy_score(y_test, y_pred)
-print("Precisión:", accuracy)
